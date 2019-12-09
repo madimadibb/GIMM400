@@ -1,0 +1,629 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "/*\n",
+    "convert each string in an array to a Double value*/\n",
+    "using System;\n",
+    "using System.Globalization;\n",
+    "\n",
+    "public class Example\n",
+    "{\n",
+    "   public static void Main()\n",
+    "   {\n",
+    "       //parse the string by using a format provider that reflects the conventions of the English (United States) \n",
+    "      string[] values = { \"1,304.16\", \"$1,456.78\", \"1,094\", \"152\", \n",
+    "                          \"123,45 €\", \"1 304,16\", \"Ae9f\" };\n",
+    "      double number;\n",
+    "      CultureInfo culture = null;\n",
+    "      \n",
+    "      foreach (string value in values) {\n",
+    "         try {\n",
+    "            culture = CultureInfo.CreateSpecificCulture(\"en-US\");\n",
+    "            number = Double.Parse(value, culture);\n",
+    "            Console.WriteLine(\"{0}: {1} --> {2}\", culture.Name, value, number);\n",
+    "         }   \n",
+    "          //this operation throws a FormatException, it tries to parse the string by using a format provider that reflects the conventions of the French \n",
+    "         catch (FormatException) {\n",
+    "            Console.WriteLine(\"{0}: Unable to parse '{1}'.\", \n",
+    "                              culture.Name, value);\n",
+    "            culture = CultureInfo.CreateSpecificCulture(\"fr-FR\");\n",
+    "            try {\n",
+    "               number = Double.Parse(value, culture);\n",
+    "               Console.WriteLine(\"{0}: {1} --> {2}\", culture.Name, value, number);\n",
+    "            }\n",
+    "            catch (FormatException) {\n",
+    "               Console.WriteLine(\"{0}: Unable to parse '{1}'.\", \n",
+    "                                 culture.Name, value);\n",
+    "            }\n",
+    "         }\n",
+    "         Console.WriteLine();\n",
+    "      }   \n",
+    "   }\n",
+    "}\n",
+    "// The example displays the following output:\n",
+    "//    en-US: 1,304.16 --> 1304.16\n",
+    "//    \n",
+    "//    en-US: Unable to parse '$1,456.78'.\n",
+    "//    fr-FR: Unable to parse '$1,456.78'.\n",
+    "//    \n",
+    "//    en-US: 1,094 --> 1094\n",
+    "//    \n",
+    "//    en-US: 152 --> 152\n",
+    "//    \n",
+    "//    en-US: Unable to parse '123,45 €'.\n",
+    "//    fr-FR: Unable to parse '123,45 €'.\n",
+    "//    \n",
+    "//    en-US: Unable to parse '1 304,16'.\n",
+    "//    fr-FR: 1 304,16 --> 1304.16\n",
+    "//    \n",
+    "//    en-US: Unable to parse 'Ae9f'.\n",
+    "//    fr-FR: Unable to parse 'Ae9f'."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "using System;\n",
+    "using System.Globalization;\n",
+    "\n",
+    "public class Example\n",
+    "{\n",
+    "   public static void Main()\n",
+    "   {\n",
+    "      string value = \"1,304\";\n",
+    "      int number;\n",
+    "      IFormatProvider provider = CultureInfo.CreateSpecificCulture(\"en-US\");\n",
+    "      if (Int32.TryParse(value, out number))\n",
+    "         Console.WriteLine(\"{0} --> {1}\", value, number);\n",
+    "      else\n",
+    "         Console.WriteLine(\"Unable to convert '{0}'\", value);\n",
+    "            \n",
+    "      if (Int32.TryParse(value, NumberStyles.Integer | NumberStyles.AllowThousands, \n",
+    "                        provider, out number))\n",
+    "         Console.WriteLine(\"{0} --> {1}\", value, number);\n",
+    "      else\n",
+    "         Console.WriteLine(\"Unable to convert '{0}'\", value);\n",
+    "   }\n",
+    "}\n",
+    "// The example displays the following output:\n",
+    "//       Unable to convert '1,304'\n",
+    "//       1,304 --> 1304\n",
+    "\n",
+    "//a string that contains a group separator cannot be converted to an Int32 value \n",
+    "//using the Int32.Parse(String) method. \n",
+    "//conversion succeeds if you use the NumberStyles.AllowThousands"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "// Int32.Parse method to parse strings that consist of digits in different writing systems\n",
+    "using System;\n",
+    "\n",
+    "public class Example\n",
+    "{\n",
+    "   public static void Main()\n",
+    "   {\n",
+    "      string value;\n",
+    "      // Define a string of basic Latin digits 1-5.\n",
+    "      value = \"\\u0031\\u0032\\u0033\\u0034\\u0035\";\n",
+    "      ParseDigits(value);\n",
+    "\n",
+    "      // Define a string of Fullwidth digits 1-5.\n",
+    "      value = \"\\uFF11\\uFF12\\uFF13\\uFF14\\uFF15\";\n",
+    "      ParseDigits(value);\n",
+    "      \n",
+    "      // Define a string of Arabic-Indic digits 1-5.\n",
+    "      value = \"\\u0661\\u0662\\u0663\\u0664\\u0665\";\n",
+    "      ParseDigits(value);\n",
+    "      \n",
+    "      // Define a string of Bangla digits 1-5.\n",
+    "      value = \"\\u09e7\\u09e8\\u09e9\\u09ea\\u09eb\";\n",
+    "      ParseDigits(value);\n",
+    "   }\n",
+    "\n",
+    "   static void ParseDigits(string value)\n",
+    "   {\n",
+    "      try {\n",
+    "         int number = Int32.Parse(value);\n",
+    "         Console.WriteLine(\"'{0}' --> {1}\", value, number);\n",
+    "      }   \n",
+    "      catch (FormatException) {\n",
+    "         Console.WriteLine(\"Unable to parse '{0}'.\", value);      \n",
+    "      }     \n",
+    "   }\n",
+    "}\n",
+    "// The example displays the following output:\n",
+    "//       '12345' --> 12345\n",
+    "//       Unable to parse '１２３４５'.\n",
+    "//       Unable to parse '١٢٣٤٥'.\n",
+    "//       Unable to parse '১২৩৪৫'."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "using System;\n",
+    "\n",
+    "public class StringConversion\n",
+    "{\n",
+    "    public static void Main()\n",
+    "    {\n",
+    "       string input = String.Empty;\n",
+    "       try\n",
+    "       {\n",
+    "           int result = Int32.Parse(input);\n",
+    "           Console.WriteLine(result);\n",
+    "       }\n",
+    "       catch (FormatException)\n",
+    "       {\n",
+    "           Console.WriteLine($\"Unable to parse '{input}'\");\n",
+    "       }\n",
+    "       // Output: Unable to parse ''\n",
+    "\n",
+    "       try\n",
+    "       {\n",
+    "            int numVal = Int32.Parse(\"-105\");\n",
+    "            Console.WriteLine(numVal);\n",
+    "       }\n",
+    "       catch (FormatException e)\n",
+    "       {\n",
+    "           Console.WriteLine(e.Message);\n",
+    "       }\n",
+    "       // Output: -105\n",
+    "\n",
+    "        if (Int32.TryParse(\"-105\", out int j))\n",
+    "            Console.WriteLine(j);\n",
+    "        else\n",
+    "            Console.WriteLine(\"String could not be parsed.\");\n",
+    "        // Output: -105\n",
+    "\n",
+    "        try\n",
+    "        {\n",
+    "            int m = Int32.Parse(\"abc\");\n",
+    "        }\n",
+    "        catch (FormatException e)\n",
+    "        {\n",
+    "            Console.WriteLine(e.Message);\n",
+    "        }\n",
+    "        // Output: Input string was not in a correct format.\n",
+    "\n",
+    "        string inputString = \"abc\";\n",
+    "        if (Int32.TryParse(inputString, out int numValue))\n",
+    "            Console.WriteLine(inputString);\n",
+    "        else\n",
+    "            Console.WriteLine($\"Int32.TryParse could not parse '{inputString}' to an int.\");\n",
+    "        // Output: Int32.TryParse could not parse 'abc' to an int.\n",
+    "     }\n",
+    "}"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "using System;\n",
+    "\n",
+    "public class StringConversion\n",
+    "{\n",
+    "    public static void Main()\n",
+    "    {\n",
+    "        var str = \"  10FFxxx\";\n",
+    "        string numericString = String.Empty;\n",
+    "        foreach (var c in str) \n",
+    "        {\n",
+    "            // Check for numeric characters (hex in this case) or leading or trailing spaces.\n",
+    "            if ((c >= '0' && c <= '9') || (Char.ToUpperInvariant(c) >= 'A' && Char.ToUpperInvariant(c) <= 'F') || c == ' ') {\n",
+    "                numericString = String.Concat(numericString, c.ToString());\n",
+    "            }\n",
+    "            else\n",
+    "            {\n",
+    "                break;\n",
+    "            }\n",
+    "        }\n",
+    "        if (int.TryParse(numericString, System.Globalization.NumberStyles.HexNumber, null, out int i))\n",
+    "            Console.WriteLine($\"'{str}' --> '{numericString}' --> {i}\");\n",
+    "            // Output: '  10FFxxx' --> '  10FF' --> 4351\n",
+    "\n",
+    "        str = \"   -10FFXXX\";\n",
+    "        numericString = \"\";\n",
+    "        foreach (char c in str) {\n",
+    "            // Check for numeric characters (0-9), a negative sign, or leading or trailing spaces.\n",
+    "            if ((c >= '0' && c <= '9') || c == ' ' || c == '-') \n",
+    "            {\n",
+    "                numericString = String.Concat(numericString, c);\n",
+    "            } else\n",
+    "                break;\n",
+    "        }\n",
+    "        if (int.TryParse(numericString, out int j))\n",
+    "            Console.WriteLine($\"'{str}' --> '{numericString}' --> {j}\");\n",
+    "            // Output: '   -10FFXXX' --> '   -10' --> -10\n",
+    "    }\n",
+    "}"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "using System;\n",
+    "\n",
+    "public class ConvertStringExample1\n",
+    "{\n",
+    "    static void Main(string[] args)\n",
+    "    {\n",
+    "        int numVal = -1;\n",
+    "        bool repeat = true;\n",
+    "\n",
+    "        while (repeat)\n",
+    "        {\n",
+    "            Console.Write(\"Enter a number between −2,147,483,648 and +2,147,483,647 (inclusive): \");\n",
+    "\n",
+    "            string input = Console.ReadLine();\n",
+    "\n",
+    "            // ToInt32 can throw FormatException or OverflowException.\n",
+    "            try\n",
+    "            {\n",
+    "                numVal = Convert.ToInt32(input);\n",
+    "                if (numVal < Int32.MaxValue)\n",
+    "                {\n",
+    "                    Console.WriteLine(\"The new value is {0}\", ++numVal);\n",
+    "                }\n",
+    "                else\n",
+    "                {\n",
+    "                    Console.WriteLine(\"numVal cannot be incremented beyond its current value\");\n",
+    "                }\n",
+    "           }\n",
+    "            catch (FormatException)\n",
+    "            {\n",
+    "                Console.WriteLine(\"Input string is not a sequence of digits.\");\n",
+    "            }\n",
+    "            catch (OverflowException)\n",
+    "            {\n",
+    "                Console.WriteLine(\"The number cannot fit in an Int32.\");\n",
+    "            }\n",
+    "\n",
+    "            Console.Write(\"Go again? Y/N: \");\n",
+    "            string go = Console.ReadLine();\n",
+    "            if (go.ToUpper() != \"Y\")\n",
+    "            {\n",
+    "                repeat = false;\n",
+    "            }\n",
+    "        }\n",
+    "    }\n",
+    "}\n",
+    "// Sample Output:\n",
+    "//   Enter a number between -2,147,483,648 and +2,147,483,647 (inclusive): 473\n",
+    "//   The new value is 474\n",
+    "//   Go again? Y/N: y\n",
+    "//   Enter a number between -2,147,483,648 and +2,147,483,647 (inclusive): 2147483647\n",
+    "//   numVal cannot be incremented beyond its current value\n",
+    "//   Go again? Y/N: y\n",
+    "//   Enter a number between -2,147,483,648 and +2,147,483,647 (inclusive): -1000\n",
+    "//   The new value is -999\n",
+    "//   Go again? Y/N: n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "// splits a common phrase into an array of strings for each word\n",
+    "string phrase = \"The quick brown fox jumps over the lazy dog.\";\n",
+    "string[] words = phrase.Split(' ');\n",
+    "\n",
+    "foreach (var word in words)\n",
+    "{\n",
+    "    System.Console.WriteLine($\"<{word}>\");\n",
+    "}"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "\n",
+    "//String.Split can use multiple separator characters. The following example uses spaces, commas, periods, colons, and tabs,\n",
+    "//passed in an array containing these separating characters, to Split. \n",
+    "//loop at the bottom of the code displays each of the words in the returned array.\n",
+    "char[] delimiterChars = { ' ', ',', '.', ':', '\\t' };\n",
+    "\n",
+    "string text = \"one\\ttwo three:four,five six seven\";\n",
+    "System.Console.WriteLine($\"Original text: '{text}'\");\n",
+    "\n",
+    "string[] words = text.Split(delimiterChars);\n",
+    "System.Console.WriteLine($\"{words.Length} words in text:\");\n",
+    "\n",
+    "foreach (var word in words)\n",
+    "{\n",
+    "    System.Console.WriteLine($\"<{word}>\");\n",
+    "}"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "//String.Split can take an array of strings (character sequences that act as separators for parsing the target string, instead of single characters)\n",
+    "string[] separatingStrings = { \"<<\", \"...\" };\n",
+    "\n",
+    "string text = \"one<<two......three<four\";\n",
+    "System.Console.WriteLine($\"Original text: '{text}'\");\n",
+    "\n",
+    "string[] words = text.Split(separatingStrings, System.StringSplitOptions.RemoveEmptyEntries);\n",
+    "System.Console.WriteLine($\"{words.Length} substrings in text:\");\n",
+    "\n",
+    "foreach (var word in words)\n",
+    "{\n",
+    "    System.Console.WriteLine(word);\n",
+    "}"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "C++17",
+   "language": "C++17",
+   "name": "xcpp17"
+  },
+  "language_info": {
+   "codemirror_mode": "text/x-c++src",
+   "file_extension": ".cpp",
+   "mimetype": "text/x-c++src",
+   "name": "c++",
+   "version": "-std=c++17"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 4
+}
+-----------
+AI wondering and moving over a network
+public static Vector3 RandomNavSphere (Vector3 origin, float distance, int layermask) {
+            Vector3 randomDirection = UnityEngine.Random.insideUnitSphere * distance;
+           
+            randomDirection += origin;
+           
+            NavMeshHit navHit;
+           
+            NavMesh.SamplePosition (randomDirection, out navHit, distance, layermask);
+           
+            return navHit.position;
+        }
+----------------------
+//We add a Leap Day on February 29, almost every four years. The leap day is an extra, or intercalary day and we add it to the shortest month of the year, February.
+//In the Gregorian calendar three criteria must be taken into account to identify leap years:
+//
+//The year can be evenly divided by 4, is a leap year, unless:
+//The year can be evenly divided by 100, it is NOT a leap year, unless:
+//The year is also evenly divisible by 400. Then it is a leap year.
+//This means that in the Gregorian calendar, the years 2000 and 2400 are leap years, while 1800, 1900, 2100, 2200, 2300 and 2500 are NOT //leap years
+
+def is_leap(year):
+    return year % 4 == 0 and (year % 400 == 0 or year % 100 != 0)
+
+
+year = int(raw_input())
+
+
+--------------------
+//Let's learn about list comprehensions! You are given three integers  and  representing the dimensions of a cuboid along with an integer . //You have to print a list of all possible coordinates given by  on a 3D grid where the sum of  is not equal to . Here, 
+
+//Input Format
+
+//Four integers  and  each on four separate lines, respectively.
+
+if __name__ == '__main__':
+   X = int(raw_input())
+Y = int(raw_input())
+Z = int(raw_input())
+N = int(raw_input())
+
+ans = [[i, j, k] for i in range(X + 1) for j in range(Y + 1) for k in range(Z + 1) if i + j + k != N]
+print ans
+---------------------------------------------------
+//Given the participants' score sheet for your University Sports Day, you are required to find the runner-up score. You are given  scores. //Store them in a list and find the score of the runner-up.
+
+//Input Format
+
+//The first line contains . The second line contains an array   of  integers each separated by a space.
+
+
+i = int(input())
+lis = list(map(int,raw_input().strip().split()))[:i]
+z = max(lis)
+while max(lis) == z:
+    lis.remove(max(lis))
+
+print max(lis)
+
+---------------------------------------
+
+inputsize=int(input())
+students=[[input(),float(input())] for i in range(inputsize)]
+lnew=sorted(list(set([students[i][1] for i in range(inputsize)])),key=float)
+lnew1=sorted([students[i][0] for i in range(inputsize) if lnew[1]==students[i][1]])
+for i in range(len(lnew1)):
+    print(lnew1[i])
+    
+// AI State Machine and AI code to use the states
+{
+    public enum ProcessState
+    {
+        Inactive,
+        Active,
+        Paused,
+        Terminated
+    }
+
+    public enum Command
+    {
+        Begin,
+        End,
+        Pause,
+        Resume,
+        Exit
+    }
+
+    public class Process
+    {
+        class StateTransition
+        {
+            readonly ProcessState CurrentState;
+            readonly Command Command;
+
+            public StateTransition(ProcessState currentState, Command command)
+            {
+                CurrentState = currentState;
+                Command = command;
+            }
+
+            public override int GetHashCode()
+            {
+                return 17 + 31 * CurrentState.GetHashCode() + 31 * Command.GetHashCode();
+            }
+
+            public override bool Equals(object obj)
+            {
+                StateTransition other = obj as StateTransition;
+                return other != null && this.CurrentState == other.CurrentState && this.Command == other.Command;
+            }
+        }
+
+        Dictionary<StateTransition, ProcessState> transitions;
+        public ProcessState CurrentState { get; private set; }
+
+        public Process()
+        {
+            CurrentState = ProcessState.Inactive;
+            transitions = new Dictionary<StateTransition, ProcessState>
+            {
+                { new StateTransition(ProcessState.Inactive, Command.Exit), ProcessState.Terminated },
+                { new StateTransition(ProcessState.Inactive, Command.Begin), ProcessState.Active },
+                { new StateTransition(ProcessState.Active, Command.End), ProcessState.Inactive },
+                { new StateTransition(ProcessState.Active, Command.Pause), ProcessState.Paused },
+                { new StateTransition(ProcessState.Paused, Command.End), ProcessState.Inactive },
+                { new StateTransition(ProcessState.Paused, Command.Resume), ProcessState.Active }
+            };
+        }
+
+        public ProcessState GetNext(Command command)
+        {
+            StateTransition transition = new StateTransition(CurrentState, command);
+            ProcessState nextState;
+            if (!transitions.TryGetValue(transition, out nextState))
+                throw new Exception("Invalid transition: " + CurrentState + " -> " + command);
+            return nextState;
+        }
+
+        public ProcessState MoveNext(Command command)
+        {
+            CurrentState = GetNext(command);
+            return CurrentState;
+        }
+    }
+
+
+    public class Program
+    {
+        static void Main(string[] args)
+        {
+            Process p = new Process();
+            Console.WriteLine("Current State = " + p.CurrentState);
+            Console.WriteLine("Command.Begin: Current State = " + p.MoveNext(Command.Begin));
+            Console.WriteLine("Command.Pause: Current State = " + p.MoveNext(Command.Pause));
+            Console.WriteLine("Command.End: Current State = " + p.MoveNext(Command.End));
+            Console.WriteLine("Command.Exit: Current State = " + p.MoveNext(Command.Exit));
+            Console.ReadLine();
+        }
+    }
+}
+//AI code 
+using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+ 
+public class AI : MonoBehaviour {
+    public enum States{idle, panick}
+    States state = States.idle;
+    // Use this for initialization
+    void Start () {
+ 
+    }
+   
+    // Update is called once per frame
+    void Update () {
+ 
+        switch (state) {
+            case States.idle:
+                Debug.Log ("I'm idle.");
+                break;
+            case States.panick:
+                Debug.Log ("I'm panicking.");
+                break;
+        }
+ 
+    }
+ 
+    public void setState(States s){
+        state = s;
+    }
+}
+--------------------------------------------
+//destroying objects over a network
+//instantiate, you add for example on group 1.
+
+// can destroy the gameobject on each current player and futur player.
+
+Network.Instantiate(fireball_prefab, weapon.position, rot, 1);
+private void destroy_me()
+    {
+        if (networkView.isMine)
+        {
+            Network.RemoveRPCsInGroup(1);
+            Network.Destroy(gameObject);
+        }
+    }
+    
+    
+// move player 
+     void FixedUpdate ()
+     {
+         float moveHorizontal = Input.GetAxis ("Horizontal");
+         float moveVertical = Input.GetAxis ("Vertical");
+ 
+         Vector3 movement = new Vector3 (moveHorizontal, 0.0f, moveVertical);
+ 
+         rb.AddForce (movement * speed);
+     }
+
+ /// respawn game object
+ IEnumerator RespwanBall() {
+    Destroy (ball.gameObject);
+    ball = (GameObject)Instantiate (ball, ballPosition, Quaternion.identity);
+    yield return null;
+}
